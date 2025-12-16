@@ -86,35 +86,43 @@ else:  # Uniform
 
 
 # Data Generation
-# @st.cache_data
-def generate_data(n, dist_choice, _params):
+@st.cache_data
+def generate_data(n, dist_choice, param_tuple, seed=42):
+    """
+    param_tuple: hashable tuple of distribution parameters
+        Gaussian: (mu1, mu2, sigma)
+        Exponential: (scale1, scale2)
+        Uniform: (low, high)
+    """
+    np.random.seed(seed)
     n_a = n // 2
     n_b = n - n_a
 
     if dist_choice == "Gaussian (Normal)":
-        v_a = np.random.normal(_params["mu1"], _params["sigma"], n_a)
-        v_b = np.random.normal(_params["mu2"], _params["sigma"], n_b)
+        mu1, mu2, sigma = param_tuple
+        v_a = np.random.normal(mu1, sigma, n_a)
+        v_b = np.random.normal(mu2, sigma, n_b)
     elif dist_choice == "Exponential":
-        v_a = np.random.exponential(_params["scale1"], n_a)
-        v_b = np.random.exponential(_params["scale2"], n_b)
+        scale1, scale2 = param_tuple
+        v_a = np.random.exponential(scale1, n_a)
+        v_b = np.random.exponential(scale2, n_b)
     else:  # Uniform
-        v_a = np.random.uniform(_params["low"], _params["high"] * 0.8, n_a)
-        v_b = np.random.uniform(_params["low"] * 1.2, _params["high"], n_b)
+        low, high = param_tuple
+        v_a = np.random.uniform(low, high * 0.8, n_a)
+        v_b = np.random.uniform(low * 1.2, high, n_b)
 
     v_a = np.maximum(v_a, 0)
     v_b = np.maximum(v_b, 0)
     return v_a, v_b
 
-
-params = {}
 if dist_type == "Gaussian (Normal)":
-    params = {"mu1": mu1, "mu2": mu2, "sigma": sigma}
+    param_tuple = (mu1, mu2, sigma)
 elif dist_type == "Exponential":
-    params = {"scale1": scale1, "scale2": scale2}
+    param_tuple = (scale1, scale2)
 else:
-    params = {"low": low, "high": high}
+    param_tuple = (low, high)
 
-v_a, v_b = generate_data(N, dist_type, params)
+v_a, v_b = generate_data(N, dist_type, param_tuple)
 v_total = np.concatenate([v_a, v_b])
 
 
@@ -155,7 +163,7 @@ p_baseline_input = st.sidebar.slider(
     "Status Quo Price",
     min_value=float(mc),
     max_value=max_possible,
-    value=float(mc * 1.5),
+    value=float(mc * 2.5),
 )
 
 # 1. Baseline Calculation
